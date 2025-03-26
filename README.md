@@ -31,7 +31,7 @@ cd aws-ec2-metadata-reader
 npm i
 ```
 
-### Docker Installation
+### Docker image build
 
 ```bash
 docker build -t aws-ec2-metadata-reader .
