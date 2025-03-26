@@ -7,8 +7,8 @@ TypeScript utility for retrieving EC2 instance metadata.
 ## Features
 
 - Fetch all available EC2 instance metadata
-- Retrieve specific metadata keys
-- Containerization
+- Retrieve specific metadata keys and data
+- App containerization
 
 ## Prerequisites
 
