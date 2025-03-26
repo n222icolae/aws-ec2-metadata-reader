@@ -17,8 +17,6 @@ COPY --from=builder /usr/src/app/package*.json ./
 
 RUN npm ci --only=production
 
-EXPOSE 8080
-
 USER node
 
 ENTRYPOINT ["node", "dist/index.js"]

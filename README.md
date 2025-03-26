@@ -44,28 +44,24 @@ docker build -t aws-ec2-metadata-reader .
 Fetch All Metadata
 
 ```bash
-# Local
 npm run start
 ```
 
-```bash
-# Docker
-docker run aws-ec2-metadata-reader
-```
-
 Fetch Specific Metadata
-```bash
-# Local
-npm run start -- instance-id
-npm run start -- public-hostname
-```
 
 ```bash
-# Works with jq to parse
+npm run start -- instance-id
+npm run start -- placement/availability-zone
+```
+
+Works with jq
+
+```bash
 npm run start -- | jq
 ```
 
-# Docker
+### Docker
+
 ```bash
 docker run --rm aws-ec2-metadata-reader
 ```
@@ -92,13 +88,14 @@ async function example() {
 
 ## Supported Metadata Keys
 
-The utility supports all standard EC2 metadata keys, including but not limited to:
+The utility supports all standard EC2 metadata keys, such as:
 - `instance-id`
 - `public-hostname`
 - `public-ipv4`
 - `local-hostname`
 - `local-ipv4`
 - `placement/availability-zone`
+- `network/interfaces/macs`
 - And more...
 
 ## Security Considerations
