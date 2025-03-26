@@ -1,20 +1,24 @@
-FROM node:22.13-alpine
+FROM node:22.13-alpine AS builder
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-COPY .npmrc ./
+RUN npm ci
 
-COPY index.ts ./
-COPY src ./src
-COPY tsconfig.json ./
-
-RUN npm i
-
-RUN npm install -g typescript@5.8.2
-
+COPY . .
 RUN npm run build
 
-ENTRYPOINT ["node", "dist/index.js"]
+FROM node:22.13-alpine
 
-CMD [""]
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/package*.json ./
+
+RUN npm ci --only=production
+
+EXPOSE 8080
+
+USER node
+
+ENTRYPOINT ["node", "dist/index.js"]

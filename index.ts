@@ -1,14 +1,14 @@
-import { generateMetadataJson } from "./src/service/ec2-metadata";
+import { getMetadata } from "./src/service/ec2-metadata";
 
 async function main() {
     const args = process.argv.slice(2);
     let result;
 
     if (args.length === 0) {
-        result = await generateMetadataJson();
+        result = await getMetadata();
     } else {
         const metadataKey = args[0];
-        result = await generateMetadataJson(metadataKey);
+        result = await getMetadata(metadataKey);
     }
 
     console.log(JSON.stringify(result, null, 2));

@@ -17,7 +17,7 @@ async function getAuthToken(): Promise<string> {
     return response.data;
 }
 
-async function fetchMetadataValue(path: string, authToken: string): Promise<any> {
+async function fetchMetadataValue(path: string, authToken: string): Promise<any | null> {
     try {
         const response = await axios.get(`${METADATA_URL_LATEST}${path}`, {
             headers: { 'X-aws-ec2-metadata-token': authToken },
@@ -35,7 +35,7 @@ async function fetchMetadataValue(path: string, authToken: string): Promise<any>
     }
 }
 
-async function fetchMetadataKeys(basePath: string = '', authToken: string): Promise<any> {
+async function fetchMetadataKeys(basePath: string = '', authToken: string): Promise<string[]> {
     const response = await axios.get(
         `${METADATA_URL_LATEST}${basePath}`,
         {
@@ -64,7 +64,7 @@ async function fetchMetadata(basePath: string = '', authToken: string): Promise<
     return processedMetadataKeys;
 }
 
-async function generateMetadataJson(dataKey?: string) {
+async function getMetadata(dataKey?: string): Promise<any> {
     const token = await getAuthToken();
     if (dataKey) {
         return await fetchMetadataValue(dataKey, token);
@@ -73,4 +73,4 @@ async function generateMetadataJson(dataKey?: string) {
     }
 }
 
-export { generateMetadataJson };
+export { getMetadata };
