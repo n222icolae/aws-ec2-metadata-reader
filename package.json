@@ -16,7 +16,6 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@aws-sdk/client-ec2": "^3.775.0",
     "axios": "^1.8.4",
     "yargs": "^17.7.2"
   }

@@ -15,17 +15,22 @@ async function getAuthToken(): Promise<string> {
     return response.data;
 }
 
-async function fetchMetadataValue(token: string, path: string): Promise<string | null> {
-    const response = await axios.get(
-        `${METADATA_BASE_URL}${path}`,
-        {
-            headers: {
-                'X-aws-ec2-metadata-token': token
-            },
-            responseType: 'text'
+async function fetchMetadataValue(token: string, path: string): Promise<any | null> {
+    try {
+        const response = await axios.get(`${METADATA_BASE_URL}${path}`, {
+            headers: { 'X-aws-ec2-metadata-token': token },
+            responseType: 'text',
+        });
+        const data = response.data.trim();
+
+        try {
+            return JSON.parse(data);
+        } catch {
+            return data === '' ? null : data;
         }
-    );
-    return response.data;
+    } catch (error) {
+        return null;
+    }
 }
 
 async function fetchMetadataRoutes(token: string, basePath: string = ''): Promise<any> {
@@ -53,11 +58,12 @@ async function fetchMetadataRoutes(token: string, basePath: string = ''): Promis
             processedRoutes[route] = value;
         }
     }
+    return processedRoutes;
 }
 
 async function generateMetadataJson() {
-    const authToken = await getAuthToken();
-    return await fetchMetadataRoutes(authToken);
+    const token = await getAuthToken();
+    return await fetchMetadataRoutes(token);
 }
 
 if (require.main === module) {
