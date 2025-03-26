@@ -1,10 +1,7 @@
-import dotenv from "dotenv";
-import { getInstanceMetadata } from "./src/service/aws.service";
-
-dotenv.config();
+import { generateMetadataJson } from "./src/service/aws.service";
 
 async function main() {
-    const result = await getInstanceMetadata("i-0638eae1dce60d689");
+    const result = await generateMetadataJson();
     console.log(result);
 }
 

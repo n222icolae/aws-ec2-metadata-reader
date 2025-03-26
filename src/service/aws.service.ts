@@ -1,64 +1,85 @@
-import { EC2Client, DescribeInstancesCommand } from "@aws-sdk/client-ec2";
+import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const getInstanceMetadata = async (instanceId: string) => {
-    const ec2Client = new EC2Client({
-        region: process.env.AWS_REGION,
-        credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ""
+const METADATA_BASE_URL = 'http://169.254.169.254/latest/meta-data/';
+
+async function generateMetadataToken(): Promise<string> {
+    try {
+        const response = await axios.put(
+            'http://169.254.169.254/latest/api/token',
+            '',
+            {
+                headers: {
+                    'X-aws-ec2-metadata-token-ttl-seconds': '21600'
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Failed to generate metadata token:', error);
+        throw error;
+    }
+}
+
+async function fetchMetadataRoutes(token: string, basePath: string = ''): Promise<any> {
+    try {
+        const response = await axios.get(
+            `${METADATA_BASE_URL}${basePath}`,
+            {
+                headers: {
+                    'X-aws-ec2-metadata-token': token
+                },
+                // Ensure we get text response for metadata listing
+                responseType: 'text'
+            }
+        );
+
+        // Split response into lines and filter out empty lines
+        const routes = response.data.split('\n').filter((route: string) => route.trim() !== '');
+
+        // Process routes recursively
+        const processedRoutes: any = {};
+        for (const route of routes) {
+            const fullPath = basePath + route;
+
+            // Check if route ends with '/' (indicating it's a nested path)
+            if (route.endsWith('/')) {
+                // Recursively fetch nested routes
+                processedRoutes[route.replace('/', '')] = await fetchMetadataRoutes(token, fullPath);
+            } else {
+                // For non-directory routes, just add the route name
+                processedRoutes[route] = null;
+            }
         }
-    });
-    const command = new DescribeInstancesCommand({
-        InstanceIds: [instanceId]
-    });
 
-    const response = await ec2Client.send(command);
+        return processedRoutes;
+    } catch (error) {
+        console.error(`Failed to fetch metadata for path ${basePath}:`, error);
+        throw error;
+    }
+}
 
-    console.log(`Instance ID: ${instanceId}`, process.env.AWS_ACCESS_KEY_ID, process.env.AWS_SECRET_ACCESS_KEY);
-    console.log(response.Reservations?.[0]?.Instances?.[0]);
-    return null;
-    //
-    // try {
-    //     const command = new DescribeInstancesCommand({
-    //         InstanceIds: [instanceId]
-    //     });
-    //
-    //     const response = await ec2Client.send(command);
-    //     const instance = response.Reservations?.[0]?.Instances?.[0];
-    //
-    //     if (!instance) {
-    //         throw new Error("Instance not found");
-    //     }
-    //
-    //     return {
-    //         instanceId: instance.InstanceId,
-    //         type: instance.InstanceType,
-    //         state: instance.State?.Name,
-    //         tags: instance.Tags?.reduce((acc, tag) => {
-    //             if (tag.Key && tag.Value) {
-    //                 acc[tag.Key] = tag.Value;
-    //             }
-    //             return acc;
-    //         }, {} as Record<string, string>)
-    //     };
-    // } catch (error) {
-    //     console.error("Error retrieving instance details:", error);
-    //     throw error;
-    // }
-};
+async function generateMetadataJson() {
+    try {
+        // Generate metadata token
+        const token = await generateMetadataToken();
 
-// // Usage
-// const main = async () => {
-//     try {
-//         const instanceDetails = await getInstanceDetailsBySDK("i-1234567890abcdef0");
-//         console.log(JSON.stringify(instanceDetails, null, 2));
-//     } catch (error) {
-//         console.error("Failed to retrieve instance details:", error);
-//     }
-// };
-//
-// if (require.main === module) {
-//     main();
-// }
+        // Fetch all metadata routes
+        const metadataRoutes = await fetchMetadataRoutes(token);
 
-export { getInstanceMetadata };
+        // Convert to JSON with pretty printing (2-space indentation)
+        const jsonContent = JSON.stringify(metadataRoutes, null, 2);
+
+        // Write to urls.json
+        const outputPath = path.join(__dirname, 'urls.json');
+        fs.writeFileSync(outputPath, jsonContent);
+
+        console.log('Metadata routes saved to urls.json');
+        return metadataRoutes;
+    } catch (error) {
+        console.error('Error generating metadata JSON:', error);
+    }
+}
+
+export { generateMetadataJson, fetchMetadataRoutes };
