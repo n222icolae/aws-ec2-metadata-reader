@@ -67,7 +67,7 @@ docker run --rm aws-ec2-metadata-reader
 ```
 
 ```bash
-docker run aws-ec2-metadata-reader public-hostname
+docker run --rm aws-ec2-metadata-reader public-hostname
 ```
 
 ### Programmatic Usage
